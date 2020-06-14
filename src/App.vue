@@ -2,15 +2,22 @@
   <div id="app">
     <div class="content">
       <div class="side-bar">
-        <div class="btn"><button @click="addNote" :title="addBtnTitle">新建笔记</button></div>
+        <div class="btn"><button @click="newNote" :title="showBtnTitle">新建笔记</button></div>
         <div class="list"
              v-for="note in notes"
              @click="selectNote(note)" :class="{selected:note === selectedNote}">{{note.title}}</div>
       </div>
       <div class="edit-panel">
-        <input type="text" placeholder="这里输入标题" v-model="title">
-        <button>保存</button>
-        <textarea id="txt-area"></textarea>
+        <input type="text"
+               value="无标题笔记"
+               onfocus="if(value == '无标题笔记' ){value=''}"
+               onblur="if(value == '' ){value='无标题笔记'}"
+               ref="title"
+               @input="updateTitle" maxlength="16">
+        <button @click="removeNote">删除</button>
+        <textarea id="txt-area"
+                  v-model="content"
+                  @input="updateContent">{{content}}</textarea>
       </div>
       <div class="show-panel" v-html="notePreview">{{notePreview}}</div>
     </div>i
@@ -26,49 +33,85 @@
     name: 'App',
     data() {
       return {
-        content: {},
-        notes: [],
+        content: '',
+        notes: JSON.parse(localStorage.getItem('notes')) || [],
+        selectedID: localStorage.getItem('selected-id') || null,
         title: '',
-        selectedID: null
       }
     },
     computed: {
-      // notePreview() {
-      //   // Markdown转换为HTML     
-      //   return this.selectedNote ? marked(this.selectedNote.content) : ''
-      // },
-      addBtnTitle() {
+      notePreview() {
+        // Markdown转换为HTML展示内容     
+        return this.selectedNote ? marked(this.selectedNote.content) : marked(this.content)
+      },
+      //显示保存了多少笔记
+      showBtnTitle() {
         return this.notes.length + '条笔记已保存'
       },
+      //
+      //选中的笔记，用于修改内容或者标题
       selectedNote() {
       //  返回与选择ID一样的笔记内容
         return this.notes.find(note => note.id === this.selectedID)
+      },
+
+    },
+    watch: {
+      notes: {
+        handler:'saveNotes',
+        deep: true,
+      },
+      //保存客户当前选中项
+      selectedID() {
+        localStorage.setItem('selected-id', this.selectedID)
       }
     },
-    // watch: {
-    //   content: 'saveNote',
-    //   // immediate: true
-    // },
     methods: {
-      // saveNote() {
-      //   localStorage.setItem('content', this.content)
-      // },
-      addNote() {
-        const time = Date.now()
+      //保存笔记列表
+      saveNotes() {
+        localStorage.setItem('notes', JSON.stringify(this.notes))
+        console.log('笔记已保存' + new Date);
+      },
+      //新建笔记：如果当前有笔记的话，保存当前笔记，清空标题和内容
+      newNote() {
         //  新笔记默认值
         const note = {
-          id: String(time),
-          title: this.title,
-          content:this.content,
-          created: time,
-          favorite: false
+                id: String(Date.now()),
+                title: this.$refs.title.value,
+                content:this.content,
+                created: Date.now(),
+                favorite: false
         }
+
         // 添加到列表中
         this.notes.push(note)
       },
+
+      //选中了那条笔记的ID，用此ID来选择笔记内容
       selectNote(note) {
-        console.log('this.selectedID');
-        return this.selectedID = note.id
+        // console.log(this.selectedID)
+        let seltitle = []
+        return seltitle =[this.content = note.content,this.$refs.title.value = note.title ,this.selectedID = note.id]
+      },
+      //修改title
+      updateTitle() {
+        return this.selectedNote.title = this.$refs.title.value
+      },
+      //  修改内容
+      updateContent() {
+        return this.selectedNote.content = this.content
+      },
+      //删除笔记
+      removeNote() {
+        if (this.selectedNote && confirm('Delete the note?')) {
+          // 将选中的笔记从笔记列表中移除
+          const index = this.notes.indexOf(this.selectedNote)
+          if (index !== -1) {
+            this.notes.splice(index, 1)
+          }
+          this.$refs.title.value = this.title
+
+        }
       }
     },
 
