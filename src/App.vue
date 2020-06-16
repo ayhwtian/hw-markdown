@@ -106,10 +106,6 @@
                 created: Date.now(),
         }
 
-        if(this.selectedID === null) {
-          note.title = this.$refs.title.value
-          note.content = this.content
-        }
         // 添加到列表中
         this.notes.push(note)
 
@@ -150,6 +146,7 @@
           this.selectedID = null
         }
       },
+      //清空笔记
       removeAllNote() {
         if (confirm('笔记清空后不可恢复，确定要清空吗？')) {
           // 将选中的笔记从笔记列表中移除
