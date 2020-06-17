@@ -1,4 +1,4 @@
-# markdown-demo
+# hw-markdown
 
 ## Project setup
 ```

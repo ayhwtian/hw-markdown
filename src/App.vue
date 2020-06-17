@@ -13,16 +13,16 @@
                  value="无标题笔记"
                  onfocus="if(value == '无标题笔记' ){value=''}"
                  onblur="if(value == '' ){value='无标题笔记'}"
-                 ref="title"
+                 ref="title" :disabled ='isShow'
                  @input="updateTitle">
           <button class="del-btn" @click="removeNote">删除选中笔记</button>
           <button class="delall-btn" @click="removeAllNote">清空笔记</button>
         </div>
         <div class="txt-edit">
-          <div class="line"><div v-for="i in linesCount">{{i}}</div></div>
+          <div class="leftBox" ref="leftBox"><div class="lefNum"><div v-for="i in linesCount">{{i}}</div></div></div>
           <textarea id="txt-area"
-                    v-model="content"
-                    @input="updateContent">{{content}}</textarea>
+                       v-model="content" :disabled ='isShow'
+                       @input="updateContent" ref="txtarea"></textarea>
         </div>
       </div>
       <div class="show-panel" v-html="notePreview">{{notePreview}}</div>
@@ -45,6 +45,18 @@
         isShow: true,
       }
     },
+    mounted() {
+      //监听滚动
+      this.$refs.txtarea.addEventListener('scroll',this.handleScroll)
+
+      if (this.selectedNote) {
+        this.content = this.selectedNote.content;
+      }
+
+      if(localStorage.getItem('selected-id') == 'null'){
+        this.selectedID = null
+      }
+    },
     computed: {
       notePreview() {
         // Markdown转换为HTML展示内容     
@@ -62,24 +74,11 @@
       },
       //计算行数
       linesCount() {
-        if (this.selectedNote) {
           // 计算换行符的个数
           // return this.selectedNote.content.split(/\r\n|\r|\n/).length
           return this.content.split(/\r\n|\r|\n/).length
-        }
       },
-
     },
-    mounted() {
-      if (this.selectedNote) {
-      this.content = this.selectedNote.content;
-      }
-      if(localStorage.getItem('selected-id') == 'null'){
-        this.selectedID = null
-      }
-
-    }
-    ,
     watch: {
       notes: {
         handler:'saveNotes',
@@ -88,9 +87,16 @@
       //保存客户当前选中项
       selectedID() {
         localStorage.setItem('selected-id', this.selectedID)
-      }
+      },
     },
     methods: {
+      //滚动方法
+      handleScroll() {
+        let s = this.$refs.txtarea.scrollTop
+        this.$refs.leftBox.scrollTop = this.$refs.txtarea.scrollTop
+        console.log(s);
+        console.log('111');
+      },
       //保存笔记列表
       saveNotes() {
         localStorage.setItem('notes', JSON.stringify(this.notes))
@@ -113,6 +119,7 @@
         this.$refs.title.value = '无标题笔记'
         this.content = ''
         this.notes.sort((a, b) => b.created - a.created)
+        this.isShow = false
       },
 
       //选中了那条笔记的ID，用此ID来选择笔记内容
@@ -130,7 +137,7 @@
       //  修改内容
       updateContent() {
         if(this.selectedID !== null) {
-        return this.selectedNote.content = this.content
+          return this.selectedNote.content = this.content
         }
       },
       //删除笔记
@@ -144,6 +151,10 @@
           this.$refs.title.value = this.title
           this.content = ''
           this.selectedID = null
+          this.isShow = true
+        }
+        else {
+          confirm('您还未选中任何笔记！')
         }
       },
       //清空笔记
@@ -154,8 +165,10 @@
           this.$refs.title.value = this.title
           this.content = ''
           this.selectedID = null
+          this.isShow = true
         }
-      }
+      },
+
     },
 
   }
