@@ -51,6 +51,7 @@
 
       if (this.selectedNote) {
         this.content = this.selectedNote.content;
+        this.isShow = false;
       }
 
       if(localStorage.getItem('selected-id') == 'null'){
